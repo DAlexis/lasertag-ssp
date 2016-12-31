@@ -1,55 +1,77 @@
 #include "ssp-sensor-part.h"
 
 
-#define MAX_INPUT_BUFFER_SIZE	20
+#define MAX_INPUT_BUFFER_SIZE	    20
+#define MAX_ANIMATION_TASKS_COUNT	10
+#define TICKS_TIMEOUT	1
+
+// Public variables
+SSP_Sensor_Animation_State sensor_state;
 
 // Private variables
 
 static uint8_t input_buffer[MAX_INPUT_BUFFER_SIZE];
-static int buffer_size = 0;
+static unsigned int buffer_size = 0;
 static uint8_t ready_to_precess_buffer = 0;
+static uint32_t ticks_last_receive = 0;
 
-// Private functions
+static SSP_Sensor_Animation_Task animation_tasks[MAX_ANIMATION_TASKS_COUNT];
+static uint32_t last_animation_task_time = 0;
+static uint8_t preloaded_animations_count = 0;
+static uint8_t next_animation_to_load = 0;
+static uint8_t next_animation_to_play = 0;
+
+static uint8_t next_animation_ring_index(uint8_t index);
+static uint8_t prev_animation_ring_index(uint8_t index);
+
+// Private functions prototypes
 
 static void reset_receiver(void);
-static void parse_package(SSP_M2S_Package *incoming);
-static void SSP_S2M_Header_Struct_Init(SSP_S2M_Header* header);
-static void SSP_Debug_Header_Init(SSP_Debug_Header* header);
+static void parse_package();
+static uint8_t is_current_package_valid();
+static uint8_t is_current_package_for_me();
+static void S2M_Header_Struct_Init(SSP_S2M_Header* header);
+static void Debug_Header_Init(SSP_Debug_Header* header);
 static void send_ir_data(void);
-
+static uint8_t ssp_is_receiving_timeouted(void);
+static void animate();
+static void load_animation_task(SSP_Sensor_Animation_Task* task);
 
 // Public functions
 
 void ssp_receive_byte(uint8_t byte)
 {
+	ticks_last_receive = ssp_get_time_ms();
 	input_buffer[buffer_size++] = byte;
 }
 
-void ssp_task_tick(void)
+void ssp_sensor_task_tick(void)
 {
+	// First, lets make animation step
+	animate();
+
+	if (is_current_package_valid())
+	{
+		if (is_current_package_for_me())
+		{
+			// We have just received a properly-formed package
+			parse_package();
+		} else
+			reset_receiver();
+	}
+
 	if (ssp_is_receiving_timeouted())
 	{
-		// Incoming data can be processed
-		if (buffer_size != sizeof(SSP_M2S_Package))
-		{
-			reset_receiver();
-			return;
-		}
-
-		SSP_M2S_Package *incoming = (SSP_M2S_Package *) input_buffer;
-
-		if (incoming->start_byte != SSP_START_BYTE_M2S)
-			return; // Package is not for sensor
-
-		if (incoming->target != SSP_BROADCAST_ADDRESS && incoming->target != SSP_SELF_ADDRESS)
-			return; // Package not for me
-
-		parse_package(incoming);
 		reset_receiver();
 	}
+
+	/* If package is not for smart sensor, we can do nothing
+	 * except waiting for timeout, because data stream structure
+	 * is unknown
+	 */
 }
 
-void ssp_init(void)
+void ssp_sensor_init(void)
 {
 	reset_receiver();
 	ssp_drivers_init();
@@ -58,8 +80,8 @@ void ssp_init(void)
 void ssp_send_debug_msg(char *ptr, int len)
 {
 	SSP_Debug_Header header;
+	Debug_Header_Init(&header);
 	header.size = len;
-	SSP_Debug_Header_Init(&header);
 
 	ssp_send_data((uint8_t*) &header, sizeof(header));
 	ssp_send_data((uint8_t*) ptr, len);
@@ -67,37 +89,79 @@ void ssp_send_debug_msg(char *ptr, int len)
 
 // Private functions
 
+/* SSP will call it to check if receiving is timeouted.
+ * If returns true, SSP will be forced to handle received data
+ */
+uint8_t ssp_is_receiving_timeouted(void)
+{
+	if (ssp_get_time_ms() - ticks_last_receive > TICKS_TIMEOUT)
+		return 1;
+	else
+		return 0;
+}
+
+uint8_t is_current_package_valid()
+{
+	// Incoming data can be processed
+	if (buffer_size < sizeof(SSP_M2S_Header))
+		return 0;
+
+	// We can read header
+	SSP_M2S_Header *incoming = (SSP_M2S_Header *) input_buffer;
+
+	if (buffer_size < sizeof(SSP_M2S_Header) + incoming->size)
+		return 0;
+
+	if (incoming->start_byte != SSP_START_BYTE_M2S)
+		return 0; // Package is not for sensor
+
+	return 1;
+}
+
+uint8_t is_current_package_for_me()
+{
+	SSP_M2S_Header *incoming = (SSP_M2S_Header *) input_buffer;
+
+	if (incoming->target == SSP_BROADCAST_ADDRESS || incoming->target == SSP_SELF_ADDRESS)
+		return 1; // Package not for me
+	else
+		return 0;
+}
+
 void reset_receiver(void)
 {
 	buffer_size = 0;
 	ready_to_precess_buffer = 0;
 }
 
-void parse_package(SSP_M2S_Package *incoming)
+void parse_package()
 {
+	SSP_M2S_Header *incoming = (SSP_M2S_Header *) input_buffer;
 	switch(incoming->command)
 	{
 	case SSP_M2S_GET_IR_BUFFER: send_ir_data(); return;
+	case SSP_M2S_ADD_ANIMATION_TASK: load_animation_task((SSP_Sensor_Animation_Task*) input_buffer + incoming->size); return;
 	}
 }
 
 
-void SSP_S2M_Header_Struct_Init(SSP_S2M_Header* header)
+void S2M_Header_Struct_Init(SSP_S2M_Header* header)
 {
 	header->start_byte = SSP_START_BYTE_S2M;
 	header->package_size = 0;
 	header->package_type = SSP_S2M_PACKAGE_TYPE_NOPE;
 }
 
-void SSP_Debug_Header_Init(SSP_Debug_Header* header)
+void Debug_Header_Init(SSP_Debug_Header* header)
 {
 	header->start_byte = SSP_START_BYTE_DEBUG;
+	header->size = 0;
 }
 
 void send_ir_data(void)
 {
 	SSP_S2M_Header header;
-	SSP_S2M_Header_Struct_Init(&header);
+	S2M_Header_Struct_Init(&header);
 	header.package_type = SSP_S2M_PACKAGE_TYPE_IR_DATA;
 
 	if (ssp_is_ir_data_ready())
@@ -115,55 +179,45 @@ void send_ir_data(void)
 	}
 }
 
-/*
-// private functions prototypes
-void parse_package(SSP_M2S_Package *incoming);
-//uint8_t is_bus_idle(void);
-void send_ir_data(void);
-
-// private variables
-//static uint32_t last_msg_time = 0;
-
-void ssp_init(void)
+// Animation
+void animate()
 {
-	ir_receiver_init();
-	transiver_init();
-}
+	// Stub
+	sensor_state.red_power = 255;
+	// end stub
 
-void ssp_receive(uint8_t* data, uint16_t size)
-{
-	printf("ssp_receive\n");
-	if (size != sizeof(SSP_M2S_Package))
-		return; // Package size is invalid
+	if (preloaded_animations_count == 0)
+		return;
 
-	SSP_M2S_Package *incoming = (SSP_M2S_Package *) data;
+	uint8_t current_animation_state = prev_animation_ring_index(next_animation_to_play);
 
-	if (incoming->start_byte != SSP_START_BYTE_M2S)
-		return; // Package is not for sensor
-
-	if (incoming->target != SSP_BROADCAST_ADDRESS && incoming->target != SSP_SELF_ADDRESS)
-		return; // Package not for me
-
-	// Now we have valid package! We can parse it
-	parse_package(incoming);
-}
-
-void ssp_send_debug_msg(char *ptr, int len)
-{
-	SSP_Debug_Header header;
-	SSP_Debug_Header_Init(&header);
-
-	transiver_send_data((uint8_t*) &header, sizeof(header));
-	transiver_send_data((uint8_t*) ptr, len);
-}
-
-void ssp_task_tick(void)
-{
-	if (transiver_is_input_data_ready())
+	if (animation_tasks[next_animation_to_play].ms_from_last_state <= ssp_get_time_ms() - last_animation_task_time)
 	{
-		Transiver_Buffer *transiver_data = transiver_get_input_data();
-		ssp_receive(transiver_data->buffer, transiver_data->size);
+		preloaded_animations_count--;
+		// We need to change animation
+		sensor_state = animation_tasks[next_animation_to_play].state;
+		next_animation_to_play = prev_animation_ring_index(next_animation_to_play);
 	}
 }
 
-*/
+void load_animation_task(SSP_Sensor_Animation_Task* task)
+{
+	if (preloaded_animations_count == MAX_ANIMATION_TASKS_COUNT-1)
+		return;
+
+	animation_tasks[next_animation_to_load] = *task;
+
+	next_animation_to_load = next_animation_ring_index(next_animation_to_load);
+
+	preloaded_animations_count++;
+}
+
+uint8_t next_animation_ring_index(uint8_t index)
+{
+	return (index+1) % MAX_ANIMATION_TASKS_COUNT;
+}
+
+uint8_t prev_animation_ring_index(uint8_t index)
+{
+	return index != 0 ? index-1 : MAX_ANIMATION_TASKS_COUNT-1;
+}
