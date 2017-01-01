@@ -31,7 +31,7 @@ typedef uint16_t S2M_Package_Size;
 
 // Package from master to sensor
 typedef struct {
-	uint8_t start_byte;
+	uint8_t start_byte; // should be SSP_START_BYTE_M2S
 	Sensor_Address target;
 	Sensor_Command command;
 	Sensor_Argument_Size size;
@@ -76,6 +76,7 @@ typedef struct {
 #define SSP_M2S_ADD_ANIMATION_TASK      ((Sensor_Command) 't')
 #define SSP_M2S_BREAK_ANIMATION         ((Sensor_Command) 'b')
 #define SSP_M2S_SEND_IR_BUFFER          ((Sensor_Command) 's')
+#define SSP_M2S_NOPE                    ((Sensor_Command) '0')
 
 #define SSP_S2M_PACKAGE_TYPE_NOPE       ((S2M_Package_Type) 'n')
 #define SSP_S2M_PACKAGE_TYPE_IR_DATA    ((S2M_Package_Type) 'i')

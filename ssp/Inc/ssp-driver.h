@@ -10,6 +10,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
 /***********************************************
  * This functions must be implemented externally:
  */
@@ -30,6 +34,9 @@ uint8_t ssp_is_ir_data_ready(void);
 /* Should set pointer to IR data and set its size */
 void ssp_get_ir_data(uint8_t** data, uint16_t* size);
 
+/* Write data to debug channel (for master device) */
+void ssp_write_debug(uint8_t* data, uint16_t size);
+
 /***********************************************
  * This functions implemented by SSP:
  */
@@ -38,5 +45,9 @@ void ssp_get_ir_data(uint8_t** data, uint16_t* size);
  * It is safe to call it from in interrupt
  */
 void ssp_receive_byte(uint8_t byte);
+
+#ifdef __cplusplus
+	}
+#endif
 
 #endif /* SMART_SENSOR_INC_SSP_DRIVER_H_ */

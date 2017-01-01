@@ -27,6 +27,8 @@ void ssp_master_init(void);
 /* Should be called as frequently as possible from main loop or OS thread */
 void ssp_master_task_tick(void);
 
+void ssp_push_ir_request(Sensor_Address target_device);
+
 SSP_IR_Buffer* ssp_get_next_ir_buffer();
 
 void ssp_push_animation_task(Sensor_Address target, SSP_Sensor_Animation_Task* task);
