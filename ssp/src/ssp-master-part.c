@@ -10,7 +10,7 @@
 #include "ssp-receiver.h"
 
 #include "stddef.h"
-#include <stdio.h>
+
 // Private variables
 static SSP_IR_Buffer ir_queue[SSP_IR_QUEUE_SIZE];
 static uint16_t ir_queue_begin = 0;
@@ -20,7 +20,7 @@ static uint16_t ir_queue_end = 0;
 static void M2S_Header_Struct_Init(SSP_Header* header);
 static uint8_t is_current_package_valid();
 static void parse_package();
-static SSP_IR_Buffer* pop_ir();
+static void push_ir(SSP_IR_Buffer* buffer);
 
 void ssp_master_init(void)
 {
@@ -56,7 +56,12 @@ SSP_IR_Buffer* ssp_get_next_ir_buffer()
 {
 	if (ir_queue_begin != ir_queue_end)
 	{
-		return &(ir_queue[ir_queue_begin++]);
+		SSP_IR_Buffer* result = &(ir_queue[ir_queue_begin]);
+		if (ir_queue_begin == SSP_IR_QUEUE_SIZE-1)
+			ir_queue_begin = 0;
+		else
+			ir_queue_begin++;
+		return result;
 	} else
 		return NULL;
 }
@@ -89,15 +94,17 @@ uint8_t is_current_package_valid()
 void parse_package()
 {
 	SSP_Header *incoming = (SSP_Header *) ssp_receiver_buffer.buffer;
+	uint8_t *data = ssp_receiver_buffer.buffer + sizeof(SSP_Header);
 
 	switch(incoming->command)
 	{
 	case SSP_S2M_IR_DATA:
-		printf("Yeah\n");
-		// Todo: process IR data
+		if (incoming->size != 0)
+			push_ir((SSP_IR_Buffer*) data);
+
 		break;
 	case SSP_S2M_DEBUG:
-		ssp_write_debug(ssp_receiver_buffer.buffer + sizeof(SSP_Header), incoming->size);
+		ssp_write_debug(data, incoming->size);
 		break;
 	}
 }

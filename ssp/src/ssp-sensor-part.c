@@ -1,6 +1,7 @@
 #include "ssp-sensor-part.h"
 
 #include "ssp-receiver.h"
+//#include "stm32f0xx_hal.h"
 
 #define MAX_ANIMATION_TASKS_COUNT	10
 
@@ -135,6 +136,7 @@ void send_ir_data(void)
 
 	if (ssp_is_ir_data_ready())
 	{
+//		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1);
 		// We have IR data, so sending it via SSP
 		uint8_t* ir_data;
 		uint16_t ir_data_size;
