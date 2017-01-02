@@ -7,7 +7,7 @@
 
 #include "ssp-receiver.h"
 
-#define RECEIVER_TIMEOUT	100
+#define RECEIVER_TIMEOUT	10
 
 // Public variables
 SSP_Receiver_Buffer ssp_receiver_buffer;
@@ -31,15 +31,8 @@ uint8_t ssp_is_receiving_timeouted(void)
 		return 0;
 }
 
-uint8_t ssp_receiver_task_tick(void)
-{
-	if (ssp_is_receiving_timeouted())
-	{
-		ssp_reset_receiver();
-	}
-}
-
 void ssp_reset_receiver(void)
 {
 	ssp_receiver_buffer.size = 0;
+	//ticks_last_receive = ssp_get_time_ms();
 }

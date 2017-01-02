@@ -28,7 +28,6 @@ typedef struct {
 } SSP_Receiver_Buffer;
 
 uint8_t ssp_is_receiving_timeouted(void);
-uint8_t ssp_receiver_task_tick(void);
 void ssp_reset_receiver(void);
 
 extern SSP_Receiver_Buffer ssp_receiver_buffer;

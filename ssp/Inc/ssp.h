@@ -31,18 +31,10 @@ typedef uint16_t S2M_Package_Size;
 
 // Package from master to sensor
 typedef struct {
-	uint8_t start_byte; // should be SSP_START_BYTE_M2S
-	SSP_Address target;
 	SSP_Command command;
+	SSP_Address target;
 	Sensor_Argument_Size size;
-} SSP_M2S_Header;
-
-// Header of packager from sensor to master
-typedef struct {
-	uint8_t start_byte; // should be SSP_START_BYTE_S2M
-	S2M_Package_Type package_type;
-	S2M_Package_Size package_size;
-} SSP_S2M_Header;
+} SSP_Header;
 
 typedef struct {
 	uint8_t red_power;
@@ -60,9 +52,6 @@ typedef struct {
 
 #define SSP_IR_BUFFER_MAX_SIZE          50
 
-#define SSP_START_BYTE_M2S              ((uint8_t) 'M')
-#define SSP_START_BYTE_S2M              ((uint8_t) 'S')
-
 #define SSP_BROADCAST_ADDRESS           ((SSP_Address) 0xFFFF)
 #define SSP_MASTER_ADDRESS              ((SSP_Address) 0xFFF0)
 
@@ -72,9 +61,9 @@ typedef struct {
 #define SSP_M2S_SEND_IR_BUFFER          ((SSP_Command) 's')
 #define SSP_M2S_NOPE                    ((SSP_Command) '0')
 
-#define SSP_S2M_PACKAGE_TYPE_NOPE       ((S2M_Package_Type) 'n')
-#define SSP_S2M_PACKAGE_TYPE_IR_DATA    ((S2M_Package_Type) 'i')
-#define SSP_S2M_PACKAGE_DEBUG           ((S2M_Package_Type) 'd')
+#define SSP_S2M_NOPE       ((S2M_Package_Type) 'n')
+#define SSP_S2M_IR_DATA    ((S2M_Package_Type) 'i')
+#define SSP_S2M_DEBUG      ((S2M_Package_Type) 'd')
 
 #ifdef __cplusplus
 	} // end of extern "C"
