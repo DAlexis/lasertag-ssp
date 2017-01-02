@@ -10,7 +10,7 @@
 #include "ssp-receiver.h"
 
 #include "stddef.h"
-
+#include <stdio.h>
 // Private variables
 static SSP_IR_Buffer ir_queue[SSP_IR_QUEUE_SIZE];
 static uint16_t ir_queue_begin = 0;
@@ -30,8 +30,10 @@ void ssp_master_init(void)
 
 void ssp_master_task_tick(void)
 {
+
 	if (is_current_package_valid())
 	{
+		printf("Valid package\n");
 		parse_package();
 		ssp_reset_receiver();
 	}
@@ -42,7 +44,7 @@ void ssp_master_task_tick(void)
 	}
 }
 
-void ssp_push_ir_request(Sensor_Address target_device)
+void ssp_push_ir_request(SSP_Address target_device)
 {
 	SSP_M2S_Header header;
 	M2S_Header_Struct_Init(&header);
@@ -80,6 +82,9 @@ uint8_t is_current_package_valid()
 	if (ssp_receiver_buffer.size < sizeof(SSP_S2M_Header) + incoming->package_size)
 		return 0;
 
+	if (incoming->start_byte != SSP_START_BYTE_S2M)
+		return 0; // Package is not for sensor
+
 	return 1;
 }
 
@@ -87,20 +92,14 @@ void parse_package()
 {
 	SSP_S2M_Header *incoming = (SSP_S2M_Header *) ssp_receiver_buffer.buffer;
 
-	if (incoming->start_byte == SSP_START_BYTE_DEBUG)
-	{
-		ssp_write_debug(ssp_receiver_buffer.buffer + sizeof(SSP_S2M_Header), incoming->package_size);
-		return;
-	}
-	if (incoming->start_byte != SSP_START_BYTE_S2M)
-		return; // Package is not for sensor
-
-
 	switch(incoming->package_type)
 	{
 	case SSP_S2M_PACKAGE_TYPE_IR_DATA:
 		// Todo: process IR data
-		return;
+		break;
+	case SSP_S2M_PACKAGE_DEBUG:
+		ssp_write_debug(ssp_receiver_buffer.buffer + sizeof(SSP_S2M_Header), incoming->package_size);
+		break;
 	}
 }
 

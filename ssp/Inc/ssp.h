@@ -21,8 +21,8 @@
 	extern "C" {
 #endif
 
-typedef uint16_t Sensor_Address;
-typedef uint16_t Sensor_Command;
+typedef uint16_t SSP_Address;
+typedef uint16_t SSP_Command;
 typedef uint8_t Sensor_Argument_Size;
 typedef uint8_t S2M_Package_Type;
 typedef uint16_t S2M_Package_Size;
@@ -32,8 +32,8 @@ typedef uint16_t S2M_Package_Size;
 // Package from master to sensor
 typedef struct {
 	uint8_t start_byte; // should be SSP_START_BYTE_M2S
-	Sensor_Address target;
-	Sensor_Command command;
+	SSP_Address target;
+	SSP_Command command;
 	Sensor_Argument_Size size;
 } SSP_M2S_Header;
 
@@ -43,12 +43,6 @@ typedef struct {
 	S2M_Package_Type package_type;
 	S2M_Package_Size package_size;
 } SSP_S2M_Header;
-
-// Debug info (no real data, simply text for human)
-typedef struct {
-	uint8_t start_byte;
-	uint16_t size;
-} SSP_Debug_Header;
 
 typedef struct {
 	uint8_t red_power;
@@ -68,18 +62,19 @@ typedef struct {
 
 #define SSP_START_BYTE_M2S              ((uint8_t) 'M')
 #define SSP_START_BYTE_S2M              ((uint8_t) 'S')
-#define SSP_START_BYTE_DEBUG            ((uint8_t) 'D')
 
-#define SSP_BROADCAST_ADDRESS           ((Sensor_Address) 0xFFFF)
+#define SSP_BROADCAST_ADDRESS           ((SSP_Address) 0xFFFF)
+#define SSP_MASTER_ADDRESS              ((SSP_Address) 0xFFF0)
 
-#define SSP_M2S_GET_IR_BUFFER           ((Sensor_Command) 'g')
-#define SSP_M2S_ADD_ANIMATION_TASK      ((Sensor_Command) 't')
-#define SSP_M2S_BREAK_ANIMATION         ((Sensor_Command) 'b')
-#define SSP_M2S_SEND_IR_BUFFER          ((Sensor_Command) 's')
-#define SSP_M2S_NOPE                    ((Sensor_Command) '0')
+#define SSP_M2S_GET_IR_BUFFER           ((SSP_Command) 'g')
+#define SSP_M2S_ADD_ANIMATION_TASK      ((SSP_Command) 't')
+#define SSP_M2S_BREAK_ANIMATION         ((SSP_Command) 'b')
+#define SSP_M2S_SEND_IR_BUFFER          ((SSP_Command) 's')
+#define SSP_M2S_NOPE                    ((SSP_Command) '0')
 
 #define SSP_S2M_PACKAGE_TYPE_NOPE       ((S2M_Package_Type) 'n')
 #define SSP_S2M_PACKAGE_TYPE_IR_DATA    ((S2M_Package_Type) 'i')
+#define SSP_S2M_PACKAGE_DEBUG           ((S2M_Package_Type) 'd')
 
 #ifdef __cplusplus
 	} // end of extern "C"

@@ -9,8 +9,6 @@ SSP_Sensor_Animation_State sensor_state;
 
 // Private variables
 
-static uint32_t ticks_last_receive = 0;
-
 static SSP_Sensor_Animation_Task animation_tasks[MAX_ANIMATION_TASKS_COUNT];
 static uint32_t last_animation_task_time = 0;
 static uint8_t preloaded_animations_count = 0;
@@ -26,7 +24,7 @@ static void parse_package();
 static uint8_t is_current_package_valid();
 static uint8_t is_current_package_for_me();
 static void S2M_Header_Struct_Init(SSP_S2M_Header* header);
-static void Debug_Header_Init(SSP_Debug_Header* header);
+static void Debug_Header_Init(SSP_S2M_Header* header);
 static void send_ir_data(void);
 static void animate();
 static void load_animation_task(SSP_Sensor_Animation_Task* task);
@@ -67,9 +65,9 @@ void ssp_sensor_init(void)
 
 void ssp_send_debug_msg(char *ptr, int len)
 {
-	SSP_Debug_Header header;
+	SSP_S2M_Header header;
 	Debug_Header_Init(&header);
-	header.size = len;
+	header.package_size = len;
 
 	ssp_send_data((uint8_t*) &header, sizeof(header));
 	ssp_send_data((uint8_t*) ptr, len);
@@ -123,10 +121,11 @@ void S2M_Header_Struct_Init(SSP_S2M_Header* header)
 	header->package_type = SSP_S2M_PACKAGE_TYPE_NOPE;
 }
 
-void Debug_Header_Init(SSP_Debug_Header* header)
+void Debug_Header_Init(SSP_S2M_Header* header)
 {
-	header->start_byte = SSP_START_BYTE_DEBUG;
-	header->size = 0;
+	header->start_byte = SSP_START_BYTE_S2M;
+	header->package_size = 0;
+	header->package_type = SSP_S2M_PACKAGE_DEBUG;
 }
 
 void send_ir_data(void)

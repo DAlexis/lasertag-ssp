@@ -19,7 +19,7 @@
 typedef struct {
 	uint8_t data[SSP_IR_BUFFER_MAX_SIZE];
 	uint16_t size;
-	Sensor_Address sensor_address;
+	SSP_Address sensor_address;
 } SSP_IR_Buffer;
 
 void ssp_master_init(void);
@@ -27,11 +27,11 @@ void ssp_master_init(void);
 /* Should be called as frequently as possible from main loop or OS thread */
 void ssp_master_task_tick(void);
 
-void ssp_push_ir_request(Sensor_Address target_device);
+void ssp_push_ir_request(SSP_Address target_device);
 
 SSP_IR_Buffer* ssp_get_next_ir_buffer();
 
-void ssp_push_animation_task(Sensor_Address target, SSP_Sensor_Animation_Task* task);
+void ssp_push_animation_task(SSP_Address target, SSP_Sensor_Animation_Task* task);
 
 #ifdef __cplusplus
 	} // end of extern "C"

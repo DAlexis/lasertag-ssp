@@ -10,6 +10,6 @@
 
 #include "ssp.h"
 
-#define SSP_SELF_ADDRESS    ((Sensor_Address) 123)
+#define SSP_SELF_ADDRESS    ((SSP_Address) 123)
 
 #endif /* INC_SSP_CONFIG_H_ */

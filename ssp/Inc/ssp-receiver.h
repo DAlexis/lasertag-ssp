@@ -13,6 +13,10 @@
 
 #define SSP_MAX_INPUT_BUFFER_SIZE    70
 
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
 /*
  * This header contains code that is identical for master and sensor side
  * and does all things for data receiving and timeout control
@@ -28,5 +32,9 @@ uint8_t ssp_receiver_task_tick(void);
 void ssp_reset_receiver(void);
 
 extern SSP_Receiver_Buffer ssp_receiver_buffer;
+
+#ifdef __cplusplus
+	} // extern "C"
+#endif
 
 #endif /* SMART_SENSOR_LASERTAG_SSP_SSP_INC_SSP_RECEIVER_H_ */
