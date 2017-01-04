@@ -7,8 +7,6 @@
 
 #include "ssp-master-part.h"
 
-#include "ssp-receiver.h"
-
 #include "stddef.h"
 
 // Private variables
@@ -49,6 +47,7 @@ void ssp_push_ir_request(SSP_Address target_device)
 	M2S_Header_Struct_Init(&header);
 	header.command = SSP_M2S_GET_IR_BUFFER;
 	header.target = target_device;
+	ssp_set_crc8(&header, NULL);
 	ssp_send_data((uint8_t*) &header, sizeof(SSP_Header));
 }
 
@@ -66,6 +65,17 @@ SSP_IR_Buffer* ssp_get_next_ir_buffer()
 		return NULL;
 }
 
+void ssp_push_animation_task(SSP_Address target, SSP_Sensor_Animation_Task* task)
+{
+	SSP_Header header;
+	M2S_Header_Struct_Init(&header);
+	header.command = SSP_M2S_ADD_ANIMATION_TASK;
+	header.target = target;
+	header.size = sizeof(SSP_Sensor_Animation_Task);
+	ssp_set_crc8(&header, (uint8_t*)task);
+	ssp_send_data((uint8_t*) &header, sizeof(SSP_Header));
+	ssp_send_data((uint8_t*) task, header.size);
+}
 
 void M2S_Header_Struct_Init(SSP_Header* header)
 {

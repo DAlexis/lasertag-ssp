@@ -23,24 +23,24 @@
 
 typedef uint16_t SSP_Address;
 typedef uint16_t SSP_Command;
-typedef uint8_t Sensor_Argument_Size;
-typedef uint8_t S2M_Package_Type;
-typedef uint16_t S2M_Package_Size;
+typedef uint8_t SSP_Argument_Size;
+typedef uint8_t SSP_Checksum;
 
 #pragma pack(push, 1)
 
 // Package from master to sensor
 typedef struct {
-	SSP_Command command;
+	SSP_Checksum crc8;
+	SSP_Argument_Size size;
 	SSP_Address target;
-	Sensor_Argument_Size size;
+	SSP_Command command;
 } SSP_Header;
 
 typedef struct {
-	uint8_t red_power;
-	uint8_t green_power;
-	uint8_t blue_power;
-	uint8_t	vibro_enabled;
+	uint8_t red;
+	uint8_t green;
+	uint8_t blue;
+	uint8_t	vibro;
 } SSP_Sensor_Animation_State;
 
 typedef struct {
@@ -51,6 +51,9 @@ typedef struct {
 #pragma pack(pop)
 
 #define SSP_IR_BUFFER_MAX_SIZE          50
+#define SSP_MAX_INPUT_BUFFER_SIZE       70
+
+#define RECEIVER_TIMEOUT	10
 
 #define SSP_BROADCAST_ADDRESS           ((SSP_Address) 0xFFFF)
 #define SSP_MASTER_ADDRESS              ((SSP_Address) 0xFFF0)
@@ -59,11 +62,27 @@ typedef struct {
 #define SSP_M2S_ADD_ANIMATION_TASK      ((SSP_Command) 't')
 #define SSP_M2S_BREAK_ANIMATION         ((SSP_Command) 'b')
 #define SSP_M2S_SEND_IR_BUFFER          ((SSP_Command) 's')
+#define SSP_M2S_PING                    ((SSP_Command) 'p')
 #define SSP_M2S_NOPE                    ((SSP_Command) '0')
 
-#define SSP_S2M_NOPE       ((S2M_Package_Type) 'n')
-#define SSP_S2M_IR_DATA    ((S2M_Package_Type) 'i')
-#define SSP_S2M_DEBUG      ((S2M_Package_Type) 'd')
+#define SSP_S2M_NOPE       ((SSP_Command) 'n')
+#define SSP_S2M_IR_DATA    ((SSP_Command) 'i')
+#define SSP_S2M_DEBUG      ((SSP_Command) 'd')
+
+
+typedef struct {
+	uint8_t buffer[SSP_MAX_INPUT_BUFFER_SIZE];
+	uint16_t size;
+} SSP_Receiver_Buffer;
+
+uint8_t ssp_is_receiving_timeouted(void);
+void ssp_reset_receiver(void);
+uint8_t ssp_crc8(uint8_t *pcBlock, uint16_t len);
+uint8_t ssp_crc8_seed(uint8_t seed, uint8_t *pcBlock, uint16_t len);
+uint8_t ssp_is_package_valid(uint8_t* package, uint16_t size);
+void ssp_set_crc8(SSP_Header* header, uint8_t *argument);
+
+extern SSP_Receiver_Buffer ssp_receiver_buffer;
 
 #ifdef __cplusplus
 	} // end of extern "C"
