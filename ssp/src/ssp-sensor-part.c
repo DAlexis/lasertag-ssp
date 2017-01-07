@@ -40,11 +40,12 @@ void ssp_sensor_task_tick(void)
 	// First, lets make animation step
 	animate();
 
-	SSP_Package* package = get_package_if_ready();
-	if (package && is_package_for_me(package))
+	// Fetching all packages one by one
+	SSP_Package* package;
+	while (NULL != (package = get_package_if_ready()))
 	{
-		//HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);
-		parse_package(package);
+		if (is_package_for_me(package))
+			parse_package(package);
 	}
 
 	if (ssp_is_receiving_timeouted())
@@ -66,42 +67,6 @@ void ssp_sensor_init(void)
 	sensor_state.blue = 0;
 	sensor_state.vibro = 0;
 	ssp_drivers_init();
-/*
-	SSP_Sensor_Animation_Task task;
-	task.state.red = 0;
-	task.state.green = 0;
-	task.state.blue = 0;
-	task.state.vibro = 0;
-	task.ms_from_last_state = 1000;
-	load_animation_task(&task);
-
-	task.state.red = 255;
-	task.state.green = 0;
-	task.state.blue = 0;
-	task.state.vibro = 0;
-	task.ms_from_last_state = 1000;
-	load_animation_task(&task);
-
-	task.state.red = 0;
-	task.state.green = 255;
-	task.state.blue = 0;
-	task.state.vibro = 0;
-	task.ms_from_last_state = 1000;
-	load_animation_task(&task);
-
-	task.state.red = 0;
-	task.state.green = 0;
-	task.state.blue = 255;
-	task.state.vibro = 0;
-	task.ms_from_last_state = 1000;
-	load_animation_task(&task);
-
-	task.state.red = 0;
-	task.state.green = 0;
-	task.state.blue = 0;
-	task.state.vibro = 0;
-	task.ms_from_last_state = 1000;
-	load_animation_task(&task);*/
 }
 
 void ssp_send_debug_msg(char *ptr, int len)
@@ -146,6 +111,7 @@ void package_init(SSP_Package* package)
 
 void send_ir_data(void)
 {
+	//HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);
 	SSP_Package package;
 	package_init(&package);
 	package.header.command = SSP_S2M_IR_DATA;

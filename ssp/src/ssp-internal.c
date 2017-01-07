@@ -50,7 +50,15 @@ SSP_Package* get_package_if_ready()
 	uint8_t crc8 = package_crc8(header, argument_inplace);
 
 	if (crc8 != header->crc8)
+	{
+		/** We have package that seems valid, but its CRC failed
+		 * Really we can do nothing except to be confused...
+		 * We may delete this package from buffer, but it would not
+		 * guarantee then next package will not be damaged so
+		 * lets wait until timeout.
+		 */
 		return NULL;
+	}
 
 	// Buffer beginned from valid package, we should move it into userspace
 	ssp_user_package.header = *header;

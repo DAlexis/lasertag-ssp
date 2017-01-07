@@ -70,21 +70,16 @@ void ssp_master_task_tick(void)
 
 	// We have general case, address discovery not run
 
-	SSP_Package* package = get_package_if_ready();
-	if (package && is_package_for_me(package))
+	// Fetching all packages one by one
+	SSP_Package* package;
+	while (NULL != (package = get_package_if_ready()))
 	{
-		parse_package(package);
-		busy = 0;
+		if (is_package_for_me(package))
+		{
+			parse_package(package);
+			busy = 0;
+		}
 	}
-
-	/*
-	if (ssp_is_package_valid())
-	{
-		printf("Valid package!\n");
-		parse_package();
-		ssp_reset_receiver();
-		busy = 0;
-	}*/
 
 	if (ssp_is_receiving_timeouted())
 	{
@@ -166,7 +161,6 @@ void package_init(SSP_Package* package)
 
 void parse_package()
 {
-	printf("parse\n");
 	SSP_Header *incoming = (SSP_Header *) ssp_receiver_buffer.buffer;
 	uint8_t *data = ssp_receiver_buffer.buffer + sizeof(SSP_Header);
 
@@ -191,10 +185,7 @@ void parse_package()
 
 uint8_t is_package_for_me(SSP_Package* package)
 {
-	if (package->header.target == SSP_BROADCAST_ADDRESS || package->header.target  == SSP_MASTER_ADDRESS)
-		return 1; // Package not for me
-	else
-		return 0;
+	return (package->header.target == SSP_BROADCAST_ADDRESS || package->header.target == SSP_MASTER_ADDRESS);
 }
 
 void push_ir(SSP_Address sender, SSP_S2M_IR_Buffer* buf)
