@@ -1,7 +1,9 @@
 #include "ssp-sensor-part.h"
+#include "ssp-internal.h"
 
 #include <stddef.h>
-//#include "stm32f0xx_hal.h"
+#include <string.h>
+#include "stm32f0xx_hal.h"
 
 #define MAX_ANIMATION_TASKS_COUNT	10
 
@@ -15,19 +17,20 @@ static uint32_t last_animation_task_time = 0;
 static uint8_t preloaded_animations_count = 0;
 static uint8_t next_animation_to_load = 0;
 static uint8_t next_animation_to_play = 0;
+static uint8_t is_address_sending_enabled = 1;
 
 static uint8_t next_animation_ring_index(uint8_t index);
 static uint8_t prev_animation_ring_index(uint8_t index);
 
 // Private functions prototypes
 
-static void parse_package();
-static uint8_t is_current_package_valid();
-static uint8_t is_current_package_for_me();
-static void header_struct_init(SSP_Header* header);
-static void debug_header_init(SSP_Header* header);
+static void parse_package(SSP_Package* package);
+static uint8_t is_package_for_me(SSP_Package* package);
+static void package_init(SSP_Package* package);
 static void send_ir_data(void);
-static void animate();
+static void send_address_probably(uint16_t prob);
+static void address_sending_enable(uint8_t enable);
+static void animate(void);
 static void load_animation_task(SSP_Sensor_Animation_Task* task);
 
 // Public functions
@@ -37,14 +40,11 @@ void ssp_sensor_task_tick(void)
 	// First, lets make animation step
 	animate();
 
-	if (is_current_package_valid())
+	SSP_Package* package = get_package_if_ready();
+	if (package && is_package_for_me(package))
 	{
-		if (is_current_package_for_me())
-		{
-			// We have just received a properly-formed package
-			parse_package();
-		}
-		ssp_reset_receiver();
+		//HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);
+		parse_package(package);
 	}
 
 	if (ssp_is_receiving_timeouted())
@@ -106,74 +106,49 @@ void ssp_sensor_init(void)
 
 void ssp_send_debug_msg(char *ptr, int len)
 {
-	SSP_Header header;
-	debug_header_init(&header);
-	header.size = len;
-
-	ssp_set_crc8(&header, (uint8_t*)ptr);
-	ssp_send_data((uint8_t*) &header, sizeof(header));
-	ssp_send_data((uint8_t*) ptr, len);
+	SSP_Package package;
+	package_init(&package);
+	package.header.command = SSP_S2M_DEBUG;
+	package.header.size = len;
+	package.argument = (uint8_t*) ptr;
+	send_package(&package);
 }
 
 // Private functions
 
-uint8_t is_current_package_valid()
+uint8_t is_package_for_me(SSP_Package* package)
 {
-	// Incoming data can be processed
-	if (ssp_receiver_buffer.size < sizeof(SSP_Header))
-	{
-		return 0;
-	}
-	//printf("s=%d\n", ssp_receiver_buffer.size);
-	//HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1);
-	// We can read header
-	SSP_Header *incoming = (SSP_Header *) ssp_receiver_buffer.buffer;
-
-	if (ssp_receiver_buffer.size < sizeof(SSP_Header) + incoming->size)
-		return 0;
-
-	return 1;
-}
-
-uint8_t is_current_package_for_me()
-{
-	SSP_Header *incoming = (SSP_Header *) ssp_receiver_buffer.buffer;
-
-	if (incoming->target == SSP_BROADCAST_ADDRESS || incoming->target == SSP_SELF_ADDRESS)
+	if (package->header.target == SSP_BROADCAST_ADDRESS || package->header.target  == SSP_SELF_ADDRESS)
 		return 1; // Package not for me
 	else
 		return 0;
 }
 
-void parse_package()
+void parse_package(SSP_Package* package)
 {
-	SSP_Header *incoming = (SSP_Header *) ssp_receiver_buffer.buffer;
-
-	switch(incoming->command)
+	switch(package->header.command)
 	{
 	case SSP_M2S_GET_IR_BUFFER: send_ir_data(); return;
-	case SSP_M2S_ADD_ANIMATION_TASK: load_animation_task((SSP_Sensor_Animation_Task*) (ssp_receiver_buffer.buffer + sizeof(SSP_Header)) ); return;
+	case SSP_M2S_ADD_ANIMATION_TASK: load_animation_task((SSP_Sensor_Animation_Task*) package->argument ); return;
+	case SSP_M2S_ENABLE_SEND_ADDR_PROB: address_sending_enable(*package->argument); return;
+	case SSP_M2S_SEND_ADDRESS_PROB: send_address_probably( *((uint16_t*) package->argument) ); return;
 	}
 }
 
-void header_struct_init(SSP_Header* header)
+void package_init(SSP_Package* package)
 {
-	header->size = 0;
-	header->target = SSP_MASTER_ADDRESS;
-	header->command = SSP_S2M_NOPE;
-}
-
-void debug_header_init(SSP_Header* header)
-{
-	header_struct_init(header);
-	header->command = SSP_S2M_DEBUG;
+	package->header.size = 0;
+	package->header.target = SSP_MASTER_ADDRESS;
+	package->header.sender = SSP_SELF_ADDRESS;
+	package->header.command = SSP_S2M_NOPE;
+	package->argument = NULL;
 }
 
 void send_ir_data(void)
 {
-	SSP_Header header;
-	header_struct_init(&header);
-	header.command = SSP_S2M_IR_DATA;
+	SSP_Package package;
+	package_init(&package);
+	package.header.command = SSP_S2M_IR_DATA;
 
 	if (ssp_is_ir_data_ready())
 	{
@@ -182,15 +157,38 @@ void send_ir_data(void)
 		uint8_t* ir_data;
 		uint16_t ir_data_size;
 		ssp_get_ir_data(&ir_data, &ir_data_size);
-		header.size = ir_data_size;
-		ssp_set_crc8(&header, ir_data);
-		ssp_send_data((uint8_t*) &header, sizeof(SSP_Header));
-		ssp_send_data(ir_data, ir_data_size);
+
+		SSP_S2M_IR_Buffer buf;
+		buf.bits_count = ir_data_size;
+		memset(buf.data, 0, sizeof(buf.data));
+		memcpy(buf.data, ir_data, ssp_bits_to_bytes(ir_data_size));
+
+		package.header.size = sizeof(SSP_S2M_IR_Buffer);
+		package.argument = ir_data;
+		send_package(&package);
 	} else {
-		header.size = 0;
-		ssp_set_crc8(&header, NULL);
-		ssp_send_data((uint8_t*) &header, sizeof(SSP_Header));
+		package.header.size = 0;
+		send_package(&package);
 	}
+}
+
+void send_address_probably(uint16_t prob)
+{/*
+	// Throwing dice
+	if (!is_address_sending_enabled || ssp_random() > prob)
+		return;
+*/
+	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);
+
+	SSP_Package package;
+	package_init(&package);
+	package.header.command = SSP_S2M_ADDRESS_DISCOVERY;
+	send_package(&package);
+}
+
+void address_sending_enable(uint8_t enable)
+{
+	is_address_sending_enabled = enable;
 }
 
 // Animation
@@ -246,4 +244,12 @@ uint8_t next_animation_ring_index(uint8_t index)
 uint8_t prev_animation_ring_index(uint8_t index)
 {
 	return index != 0 ? index-1 : MAX_ANIMATION_TASKS_COUNT-1;
+}
+
+/** Realisation of LFSR algorythm with device address used as seed and feedback taps 16, 14, 13, 11 */
+uint16_t ssp_random(void)
+{
+	static uint16_t r = SSP_SELF_ADDRESS;
+	r = (r << 1) | ( ((r >> 10) ^ (r >> 12) ^ (r >> 13) ^ (r >> 15)) & 0x0001 );
+	return r;
 }

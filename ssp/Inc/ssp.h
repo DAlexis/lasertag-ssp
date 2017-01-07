@@ -21,6 +21,10 @@
 	extern "C" {
 #endif
 
+#define SSP_IR_BUFFER_MAX_SIZE          50
+#define SSP_MAX_INPUT_BUFFER_SIZE       70
+#define SSP_MAX_ARGUMENT_SIZE           SSP_MAX_INPUT_BUFFER_SIZE
+
 typedef uint16_t SSP_Address;
 typedef uint16_t SSP_Command;
 typedef uint8_t SSP_Argument_Size;
@@ -33,6 +37,7 @@ typedef struct {
 	SSP_Checksum crc8;
 	SSP_Argument_Size size;
 	SSP_Address target;
+	SSP_Address sender;
 	SSP_Command command;
 } SSP_Header;
 
@@ -48,12 +53,18 @@ typedef struct {
 	uint32_t ms_from_last_state;
 } SSP_Sensor_Animation_Task;
 
+typedef struct {
+	uint16_t probability; // real prob is probability/UINT16_MAX
+} SSP_Address_Request;
+
+typedef struct {
+	uint8_t data[SSP_IR_BUFFER_MAX_SIZE];
+	uint16_t bits_count;
+} SSP_S2M_IR_Buffer;
+
 #pragma pack(pop)
 
-#define SSP_IR_BUFFER_MAX_SIZE          50
-#define SSP_MAX_INPUT_BUFFER_SIZE       70
-
-#define RECEIVER_TIMEOUT	10
+#define RECEIVER_TIMEOUT	2
 
 #define SSP_BROADCAST_ADDRESS           ((SSP_Address) 0xFFFF)
 #define SSP_MASTER_ADDRESS              ((SSP_Address) 0xFFF0)
@@ -62,25 +73,28 @@ typedef struct {
 #define SSP_M2S_ADD_ANIMATION_TASK      ((SSP_Command) 't')
 #define SSP_M2S_BREAK_ANIMATION         ((SSP_Command) 'b')
 #define SSP_M2S_SEND_IR_BUFFER          ((SSP_Command) 's')
-#define SSP_M2S_PING                    ((SSP_Command) 'p')
 #define SSP_M2S_NOPE                    ((SSP_Command) '0')
 
-#define SSP_S2M_NOPE       ((SSP_Command) 'n')
-#define SSP_S2M_IR_DATA    ((SSP_Command) 'i')
-#define SSP_S2M_DEBUG      ((SSP_Command) 'd')
+// Address discovering features
+#define SSP_M2S_SEND_ADDRESS_PROB       ((SSP_Command) 'p')
+#define SSP_M2S_ENABLE_SEND_ADDR_PROB   ((SSP_Command) 'x') // Argument is uint8_t true/false
+
+#define SSP_S2M_NOPE               ((SSP_Command) 'n') // No argument
+#define SSP_S2M_ADDRESS_DISCOVERY  ((SSP_Command) 'a') // No argument
+#define SSP_S2M_IR_DATA            ((SSP_Command) 'i')
+#define SSP_S2M_DEBUG              ((SSP_Command) 'd')
 
 
 typedef struct {
 	uint8_t buffer[SSP_MAX_INPUT_BUFFER_SIZE];
 	uint16_t size;
+	uint8_t was_anything_received;
 } SSP_Receiver_Buffer;
 
-uint8_t ssp_is_receiving_timeouted(void);
-void ssp_reset_receiver(void);
-uint8_t ssp_crc8(uint8_t *pcBlock, uint16_t len);
-uint8_t ssp_crc8_seed(uint8_t seed, uint8_t *pcBlock, uint16_t len);
-uint8_t ssp_is_package_valid(uint8_t* package, uint16_t size);
-void ssp_set_crc8(SSP_Header* header, uint8_t *argument);
+typedef struct {
+	SSP_Header header;
+	uint8_t* argument;
+} SSP_Package;
 
 extern SSP_Receiver_Buffer ssp_receiver_buffer;
 
