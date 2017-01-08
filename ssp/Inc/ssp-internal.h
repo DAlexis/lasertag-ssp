@@ -22,26 +22,15 @@
 
 
 SSP_Package* get_package_if_ready();
-void send_package(SSP_Package* package);
-uint8_t ssp_is_receiving_timeouted(void);
+void     send_package(SSP_Package* package);
+uint8_t  ssp_is_receiving_timeouted(void);
 uint32_t ssp_get_time_from_last_package();
-void ssp_reset_receiver(void);
+void     ssp_reset_receiver(void);
+uint8_t  ssp_was_received_anything();
 
-// For unit tests only
-uint8_t ssp_crc8(uint8_t *pcBlock, uint16_t len);
-uint8_t ssp_crc8_seed(uint8_t seed, uint8_t *pcBlock, uint16_t len);
-uint8_t package_crc8(SSP_Header* header, uint8_t *argument);
+uint16_t ssp_random(void);
 
 
-
-/*
-uint8_t ssp_crc8(uint8_t *pcBlock, uint16_t len);
-uint8_t ssp_crc8_seed(uint8_t seed, uint8_t *pcBlock, uint16_t len);
-uint8_t ssp_is_received_anything();
-uint8_t ssp_is_package_valid(uint8_t* package, uint16_t size);
-void ssp_set_crc8(SSP_Header* header, uint8_t *argument);
-void ssp_send_data_clear_timeout(uint8_t* data, uint16_t size);
-*/
 uint16_t ssp_bits_to_bytes(uint16_t bits);
 
 #ifdef __cplusplus

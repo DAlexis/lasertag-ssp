@@ -3,7 +3,13 @@
 #include "../ssp/Inc/ssp-internal.h"
 
 #include <cstring>
+#include <iostream>
 
+extern "C" {
+	uint8_t ssp_crc8(uint8_t *pcBlock, uint16_t len);
+	uint8_t ssp_crc8_seed(uint8_t seed, uint8_t *pcBlock, uint16_t len);
+	uint8_t package_crc8(SSP_Header* header, uint8_t *argument);
+}
 
 TEST(CRC8Test, Concatenation)
 {
@@ -42,3 +48,33 @@ TEST(CRC8Test, DecodeEncode)
 	ASSERT_EQ(tmp, package.header.crc8);
 }
 */
+
+TEST(Random, Uniformity)
+{
+	size_t q1 = 0, q2 = 0, q3 = 0, q4 = 0;
+	size_t count = 2000;
+	for (size_t i=0; i<count; i++)
+	{
+		uint32_t r = ssp_random();
+		if (r < UINT16_MAX / 4)
+			q1++;
+		else if (r < UINT16_MAX / 2)
+			q2++;
+		else if (r < UINT16_MAX * 3 / 4)
+			q3++;
+		else
+			q4++;
+	}
+	ASSERT_NEAR(q1, q2, count * 0.02);
+	ASSERT_NEAR(q1, q3, count * 0.02);
+	ASSERT_NEAR(q1, q4, count * 0.02);
+}
+
+TEST(Random, Period)
+{
+	uint16_t start = ssp_random();
+	size_t counter = 1;
+	while(start != ssp_random())
+		counter++;
+	ASSERT_GT(counter, 65534);
+}

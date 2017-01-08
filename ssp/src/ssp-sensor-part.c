@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 #include <string.h>
-#include "stm32f0xx_hal.h"
+//#include "stm32f0xx_hal.h"
 
 #define MAX_ANIMATION_TASKS_COUNT	10
 
@@ -111,14 +111,12 @@ void package_init(SSP_Package* package)
 
 void send_ir_data(void)
 {
-	//HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);
 	SSP_Package package;
 	package_init(&package);
 	package.header.command = SSP_S2M_IR_DATA;
 
 	if (ssp_is_ir_data_ready())
 	{
-//		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1);
 		// We have IR data, so sending it via SSP
 		uint8_t* ir_data;
 		uint16_t ir_data_size;
@@ -139,13 +137,15 @@ void send_ir_data(void)
 }
 
 void send_address_probably(uint16_t prob)
-{/*
-	// Throwing dice
-	if (!is_address_sending_enabled || ssp_random() > prob)
+{
+	if (!is_address_sending_enabled)
 		return;
-*/
-	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);
 
+	// Throwing dice
+	if (ssp_random() > prob)
+		return;
+
+	//HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);
 	SSP_Package package;
 	package_init(&package);
 	package.header.command = SSP_S2M_ADDRESS_DISCOVERY;
@@ -154,6 +154,7 @@ void send_address_probably(uint16_t prob)
 
 void address_sending_enable(uint8_t enable)
 {
+
 	is_address_sending_enabled = enable;
 }
 
@@ -210,12 +211,4 @@ uint8_t next_animation_ring_index(uint8_t index)
 uint8_t prev_animation_ring_index(uint8_t index)
 {
 	return index != 0 ? index-1 : MAX_ANIMATION_TASKS_COUNT-1;
-}
-
-/** Realisation of LFSR algorythm with device address used as seed and feedback taps 16, 14, 13, 11 */
-uint16_t ssp_random(void)
-{
-	static uint16_t r = SSP_SELF_ADDRESS;
-	r = (r << 1) | ( ((r >> 10) ^ (r >> 12) ^ (r >> 13) ^ (r >> 15)) & 0x0001 );
-	return r;
 }

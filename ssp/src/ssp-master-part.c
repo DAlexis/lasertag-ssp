@@ -5,15 +5,15 @@
  *      Author: dalexies
  */
 
-#include <ssp-internal.h>
+#include "ssp-internal.h"
 #include "ssp-master-part.h"
 #include <stddef.h>
 #include <string.h>
-#include <stdio.h>
+//#include <stdio.h>
 
-#define ADDRESS_DISCOVERING_PROB_STEP     UINT16_MAX / 16
+#define ADDRESS_DISCOVERING_PROB_STEP     UINT16_MAX / 32
 #define ADDRESS_DISCOVERING_START_PROB    ADDRESS_DISCOVERING_PROB_STEP
-#define ADDRESS_DISCOVERING_TIMEOUT       1000
+#define ADDRESS_DISCOVERING_TIMEOUT       30
 
 // Public variables
 SSP_Registered_Addrs_List ssp_registered_addrs;
@@ -45,16 +45,26 @@ void ssp_master_init(void)
 
 void ssp_master_task_tick(void)
 {
-	/*
+	// Fetching all packages one by one
+	SSP_Package* package;
+	while (NULL != (package = get_package_if_ready()))
+	{
+		if (is_package_for_me(package))
+		{
+			parse_package(package);
+		}
+	}
+
+	if (!ssp_is_address_discovering_now())
+		busy = 0;
+
+
 	if (ssp_is_address_discovering_now())
 	{
 		// We are in address discovery mode
 		if (ssp_get_time_from_last_package() > ADDRESS_DISCOVERING_TIMEOUT)
 		{
-
-			// If nobody answered, increase probability
-			if (!ssp_is_received_anything())
-				addr_disc_last_prob += ADDRESS_DISCOVERING_PROB_STEP;
+			addr_disc_last_prob += ADDRESS_DISCOVERING_PROB_STEP;
 
 			// Check if cycle done
 			if (addr_disc_last_prob > UINT16_MAX - ADDRESS_DISCOVERING_PROB_STEP*2)
@@ -65,19 +75,6 @@ void ssp_master_task_tick(void)
 			}
 			request_address_probably(addr_disc_last_prob);
 			return;
-		}
-	}*/
-
-	// We have general case, address discovery not run
-
-	// Fetching all packages one by one
-	SSP_Package* package;
-	while (NULL != (package = get_package_if_ready()))
-	{
-		if (is_package_for_me(package))
-		{
-			parse_package(package);
-			busy = 0;
 		}
 	}
 
@@ -163,7 +160,6 @@ void parse_package()
 {
 	SSP_Header *incoming = (SSP_Header *) ssp_receiver_buffer.buffer;
 	uint8_t *data = ssp_receiver_buffer.buffer + sizeof(SSP_Header);
-
 	switch(incoming->command)
 	{
 	case SSP_S2M_IR_DATA:
@@ -175,17 +171,14 @@ void parse_package()
 		ssp_write_debug(data, incoming->size);
 		break;
 	case SSP_S2M_ADDRESS_DISCOVERY:
-
-		if (incoming->size != sizeof(SSP_Address))
-			break;
-		register_address( *((SSP_Address*) data) );
+		register_address( incoming->sender );
 		break;
 	}
 }
 
 uint8_t is_package_for_me(SSP_Package* package)
 {
-	return (package->header.target == SSP_BROADCAST_ADDRESS || package->header.target == SSP_MASTER_ADDRESS);
+	return (/*package->header.target == SSP_BROADCAST_ADDRESS || */package->header.target == SSP_MASTER_ADDRESS);
 }
 
 void push_ir(SSP_Address sender, SSP_S2M_IR_Buffer* buf)
@@ -204,7 +197,7 @@ void push_ir(SSP_Address sender, SSP_S2M_IR_Buffer* buf)
 
 void request_address_probably(uint16_t prob)
 {
-	printf("Requesting address with prob %d\n", (int) prob);
+	//printf("Requesting address with prob %d\n", (int) prob);
 	SSP_Address_Request req;
 	req.probability = prob;
 
@@ -230,6 +223,11 @@ void set_address_resolving(SSP_Address addr, uint8_t value)
 
 void register_address(SSP_Address addr)
 {
+	// Search if we already registered this
+	for (int i=0; i<ssp_registered_addrs.size; i++)
+		if (ssp_registered_addrs.address[i] == addr)
+			return;
+
 	if (ssp_registered_addrs.size == SSP_MAX_SENSORS_COUNT)
 		return;
 	ssp_registered_addrs.address[ssp_registered_addrs.size++] = addr;

@@ -6,10 +6,12 @@
  */
 
 #include "ssp-internal.h"
+#include "ssp-config.h"
 
 #include <stddef.h>
 #include <string.h>
-#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
 
 #define CRC8_SEED           0xFF
 
@@ -20,6 +22,12 @@ static uint8_t ssp_user_package_argument[SSP_MAX_ARGUMENT_SIZE];
 
 // Private variables
 static uint32_t ticks_last_bus_io = 0;
+
+// No static modificator to be accessible from unit test
+uint8_t ssp_crc8(uint8_t *pcBlock, uint16_t len);
+uint8_t ssp_crc8_seed(uint8_t seed, uint8_t *pcBlock, uint16_t len);
+uint8_t package_crc8(SSP_Header* header, uint8_t *argument);
+
 
 
 void ssp_receive_byte(uint8_t byte)
@@ -125,34 +133,17 @@ uint32_t ssp_get_time_from_last_package()
 void ssp_reset_receiver(void)
 {
 	ssp_receiver_buffer.size = 0;
-	ssp_receiver_buffer.was_anything_received = 0;
 	//ticks_last_bus_io = ssp_get_time_ms();
 }
-/*
-uint8_t ssp_is_package_valid(uint8_t* package, uint16_t size)
+
+uint8_t ssp_was_received_anything()
 {
-	if (size < sizeof(SSP_Header))
-		return 0;
-
-	// Now we can read header
-	SSP_Header* header = (SSP_Header*) package;
-
-	if (size != sizeof(SSP_Header) + header->size)
-		return 0;
-
-	// Now we can check CRC
-	uint8_t crc8 = ssp_crc8(
-			(uint8_t*) (package + sizeof(SSP_Checksum)),
-			size - sizeof(SSP_Checksum)
-	);
-	if (crc8 != header->crc8)
-		return 0;
-	return 1;
-}*/
-
-uint8_t ssp_is_received_anything()
-{
-	return ssp_receiver_buffer.size != 0;
+	if (ssp_receiver_buffer.was_anything_received != 0)
+	{
+		ssp_receiver_buffer.was_anything_received = 0;
+		return 1;
+	}
+	return 0;
 }
 
 void ssp_set_crc8(SSP_Header* header, uint8_t *argument)
@@ -164,7 +155,7 @@ void ssp_set_crc8(SSP_Header* header, uint8_t *argument)
 			sizeof(SSP_Header) - sizeof(SSP_Checksum)
 	);
 
-	// Caalculating by argument
+	// Calculating by argument
 	if (header->size != 0 && argument != NULL)
 		crc8 = ssp_crc8_seed(crc8, argument, header->size);
 
@@ -205,4 +196,16 @@ uint16_t ssp_bits_to_bytes(uint16_t bits)
 	if (bits % 8 != 0)
 		bytes++;
 	return bytes;
+}
+
+/** Using standard random */
+uint16_t ssp_random(void)
+{
+	static uint8_t first_run = 1;
+	if (first_run)
+	{
+		srand((SSP_SELF_ADDRESS << 15) | SSP_SELF_ADDRESS);
+		first_run = 0;
+	}
+	return rand() & 0xFFFF;
 }
