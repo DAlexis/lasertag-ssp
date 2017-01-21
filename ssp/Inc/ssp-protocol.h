@@ -9,19 +9,20 @@
 #define INC_SSP_H_
 
 /** SSP - Smart Sensor Protocol - protocol for communication
- * with lasertag smart sensor, this device.
- * "M2S" means Master To Sensor, "S2M" vice versa
+ * with lasertag smart sensor.
+ * This header contains basic protocol definitions:
+ * package headers, constants and operations codes
+ * "M2S" means Master To Slave, "S2M" vice versa
  */
 
 #include <stdint.h>
 
-#include "ssp-driver.h"
+#include "ssp-base.h"
 
 #ifdef __cplusplus
 	extern "C" {
 #endif
 
-#define SSP_IR_BUFFER_MAX_SIZE          50
 #define SSP_MAX_INPUT_BUFFER_SIZE       70
 #define SSP_MAX_ARGUMENT_SIZE           SSP_MAX_INPUT_BUFFER_SIZE
 
@@ -42,25 +43,8 @@ typedef struct {
 } SSP_Header;
 
 typedef struct {
-	uint8_t red;
-	uint8_t green;
-	uint8_t blue;
-	uint8_t	vibro;
-} SSP_Sensor_Animation_State;
-
-typedef struct {
-	SSP_Sensor_Animation_State state;
-	uint32_t ms_from_last_state;
-} SSP_Sensor_Animation_Task;
-
-typedef struct {
 	uint16_t probability; // real prob is probability/UINT16_MAX
 } SSP_Address_Request;
-
-typedef struct {
-	uint8_t data[SSP_IR_BUFFER_MAX_SIZE];
-	uint16_t bits_count;
-} SSP_S2M_IR_Buffer;
 
 #pragma pack(pop)
 

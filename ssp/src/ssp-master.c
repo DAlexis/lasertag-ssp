@@ -5,8 +5,10 @@
  *      Author: dalexies
  */
 
-#include "ssp-internal.h"
-#include "ssp-master-part.h"
+#include "ssp-protocol.h"
+#include "ssp-master-driver.h"
+#include "ssp-master.h"
+#include <ssp-utils.h>
 #include <stddef.h>
 #include <string.h>
 //#include <stdio.h>
@@ -19,7 +21,7 @@
 SSP_Registered_Addrs_List ssp_registered_addrs;
 
 // Private variables
-static SSP_IR_Buffer ir_queue[SSP_IR_QUEUE_SIZE];
+static SSP_IR_Message ir_queue[SSP_IR_QUEUE_SIZE];
 static uint16_t ir_queue_begin = 0;
 static uint16_t ir_queue_end = 0;
 static uint8_t busy = 0;
@@ -31,7 +33,7 @@ static uint16_t addr_disc_last_prob = 0;
 static void package_init(SSP_Package* package);
 uint8_t is_package_for_me(SSP_Package* package);
 static void parse_package();
-static void push_ir(SSP_Address sender, SSP_S2M_IR_Buffer* buf);
+static void push_ir(SSP_Address sender, SSP_IR_Buffer* buf);
 static void request_address_probably(uint16_t prob);
 static void set_address_resolving(SSP_Address addr, uint8_t value);
 static void register_address(SSP_Address addr);
@@ -96,11 +98,11 @@ void ssp_push_ir_request(SSP_Address target_device)
 	send_package(&package);
 }
 
-SSP_IR_Buffer* ssp_get_next_ir_buffer()
+SSP_IR_Message* ssp_get_next_ir_buffer()
 {
 	if (ir_queue_begin != ir_queue_end)
 	{
-		SSP_IR_Buffer* result = &(ir_queue[ir_queue_begin]);
+		SSP_IR_Message* result = &(ir_queue[ir_queue_begin]);
 		if (ir_queue_begin == SSP_IR_QUEUE_SIZE-1)
 			ir_queue_begin = 0;
 		else
@@ -164,7 +166,7 @@ void parse_package()
 	{
 	case SSP_S2M_IR_DATA:
 		if (incoming->size != 0)
-			push_ir(incoming->sender, (SSP_S2M_IR_Buffer*) data);
+			push_ir(incoming->sender, (SSP_IR_Buffer*) data);
 
 		break;
 	case SSP_S2M_DEBUG:
@@ -181,7 +183,7 @@ uint8_t is_package_for_me(SSP_Package* package)
 	return (/*package->header.target == SSP_BROADCAST_ADDRESS || */package->header.target == SSP_MASTER_ADDRESS);
 }
 
-void push_ir(SSP_Address sender, SSP_S2M_IR_Buffer* buf)
+void push_ir(SSP_Address sender, SSP_IR_Buffer* buf)
 {
 	if (ir_queue_end - ir_queue_begin > SSP_IR_QUEUE_SIZE-1)
 		return; // No free space in queue

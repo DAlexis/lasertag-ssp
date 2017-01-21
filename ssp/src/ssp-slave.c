@@ -1,5 +1,8 @@
-#include "ssp-sensor-part.h"
-#include "ssp-internal.h"
+#include "ssp-protocol.h"
+#include "ssp-config.h"
+#include "ssp-slave-driver.h"
+#include "ssp-slave.h"
+#include "ssp-utils.h"
 
 #include <stddef.h>
 #include <string.h>
@@ -69,6 +72,14 @@ void ssp_sensor_init(void)
 	ssp_drivers_init();
 }
 
+void ssp_get_leds_vibro_state(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* vibro)
+{
+	*r = sensor_state.red;
+	*g = sensor_state.green;
+	*b = sensor_state.blue;
+	*vibro = sensor_state.vibro;
+}
+
 void ssp_send_debug_msg(char *ptr, int len)
 {
 	SSP_Package package;
@@ -122,12 +133,12 @@ void send_ir_data(void)
 		uint16_t ir_data_size;
 		ssp_get_ir_data(&ir_data, &ir_data_size);
 
-		SSP_S2M_IR_Buffer buf;
+		SSP_IR_Buffer buf;
 		buf.bits_count = ir_data_size;
 		memset(buf.data, 0, sizeof(buf.data));
 		memcpy(buf.data, ir_data, ssp_bits_to_bytes(ir_data_size));
 
-		package.header.size = sizeof(SSP_S2M_IR_Buffer);
+		package.header.size = sizeof(SSP_IR_Buffer);
 		package.argument = ir_data;
 		send_package(&package);
 	} else {

@@ -5,16 +5,16 @@
  *      Author: dalexies
  */
 
-#ifndef SMART_SENSOR_LASERTAG_SSP_SSP_INC_SSP_INTERNAL_H_
-#define SMART_SENSOR_LASERTAG_SSP_SSP_INC_SSP_INTERNAL_H_
+#ifndef SMART_SENSOR_LASERTAG_SSP_SSP_INC_SSP_UTILS_H_
+#define SMART_SENSOR_LASERTAG_SSP_SSP_INC_SSP_UTILS_H_
 
 /**
  * This is internal header of SSP system. You should not include int into your program
  */
 
+#include <ssp-protocol.h>
 #include <stdint.h>
 
-#include "ssp.h"
 
 #ifdef __cplusplus
 	extern "C" {
@@ -37,4 +37,4 @@ uint16_t ssp_bits_to_bytes(uint16_t bits);
 	} // extern "C"
 #endif
 
-#endif /* SMART_SENSOR_LASERTAG_SSP_SSP_INC_SSP_INTERNAL_H_ */
+#endif /* SMART_SENSOR_LASERTAG_SSP_SSP_INC_SSP_UTILS_H_ */

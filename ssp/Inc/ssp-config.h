@@ -8,7 +8,7 @@
 #ifndef INC_SSP_CONFIG_H_
 #define INC_SSP_CONFIG_H_
 
-#include "ssp.h"
+#include <ssp-protocol.h>
 
 #define SSP_SELF_ADDRESS    ((SSP_Address) 123)
 

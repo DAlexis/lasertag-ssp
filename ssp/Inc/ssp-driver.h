@@ -28,15 +28,6 @@ uint32_t ssp_get_time_ms();
 /* Should send data over communication channel (i.e. UART)*/
 void ssp_send_data(uint8_t* data, uint16_t size);
 
-/* Should returns true when IR data received and ready to handle it */
-uint8_t ssp_is_ir_data_ready(void);
-
-/* Should set pointer to IR data and set its size */
-void ssp_get_ir_data(uint8_t** data, uint16_t* size);
-
-/* Write data to debug channel (for master device) */
-void ssp_write_debug(uint8_t* data, uint16_t size);
-
 /***********************************************
  * This functions implemented by SSP:
  */

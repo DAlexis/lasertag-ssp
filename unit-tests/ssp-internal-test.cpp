@@ -1,6 +1,5 @@
+#include <ssp-utils.h>
 #include "gtest/gtest.h"
-
-#include "../ssp/Inc/ssp-internal.h"
 
 #include <cstring>
 #include <iostream>

@@ -7,6 +7,7 @@ find_package (GTest REQUIRED)
 include_directories (
     ${GTEST_INCLUDE_DIR}
     ../ssp/Inc
+    ../ssp
 )
 
 set(EXE_SOURCES

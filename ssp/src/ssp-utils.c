@@ -5,12 +5,13 @@
  *      Author: dalexies
  */
 
-#include "ssp-internal.h"
 #include "ssp-config.h"
+#include "ssp-driver.h"
 
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
+#include <ssp-utils.h>
 #include <stdlib.h>
 
 #define CRC8_SEED           0xFF
