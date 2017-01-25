@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "ssp-base.h"
+#include "ssp-types.h"
 
 #ifdef __cplusplus
 	extern "C" {
@@ -25,11 +26,6 @@
 
 #define SSP_MAX_INPUT_BUFFER_SIZE       70
 #define SSP_MAX_ARGUMENT_SIZE           SSP_MAX_INPUT_BUFFER_SIZE
-
-typedef uint16_t SSP_Address;
-typedef uint16_t SSP_Command;
-typedef uint8_t SSP_Argument_Size;
-typedef uint8_t SSP_Checksum;
 
 #pragma pack(push, 1)
 

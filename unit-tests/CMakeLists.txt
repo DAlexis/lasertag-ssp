@@ -13,7 +13,9 @@ include_directories (
 set(EXE_SOURCES
     ssp-internal-test.cpp
     ssp-driver-stub.cpp
-    ../ssp/src/ssp-internal.c
+    ../ssp/src/ssp-master.c
+    ../ssp/src/ssp-slave.c
+    ../ssp/src/ssp-utils.c
 )
 
 add_executable(${PROJECT_NAME} ${EXE_SOURCES})

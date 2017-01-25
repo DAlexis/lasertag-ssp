@@ -9,6 +9,7 @@
 #define SMART_SENSOR_LASERTAG_SSP_SSP_INC_SSP_MASTER_H_
 
 #include "ssp-base.h"
+#include "ssp-types.h"
 
 #ifdef __cplusplus
 	extern "C" {
