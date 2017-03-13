@@ -18,6 +18,7 @@
  */
 
 #define SSP_IR_BUFFER_MAX_SIZE          50
+#define SSP_UART_SPEED                  38400
 
 #pragma pack(push, 1)
 
