@@ -29,11 +29,12 @@ uint8_t ssp_crc8(uint8_t *pcBlock, uint16_t len);
 uint8_t ssp_crc8_seed(uint8_t seed, uint8_t *pcBlock, uint16_t len);
 uint8_t package_crc8(SSP_Header* header, uint8_t *argument);
 
+uint8_t ssp_has_new_data();
 
 
 void ssp_receive_byte(uint8_t byte)
 {
-	ssp_receiver_buffer.was_anything_received = 1;
+	ssp_receiver_buffer.has_new_data = 1;
 	ticks_last_bus_io = ssp_get_time_ms();
 	if (ssp_receiver_buffer.size == SSP_MAX_INPUT_BUFFER_SIZE - 1)
 		return; // We do not support messages that are longer than SSP_MAX_INPUT_BUFFER_SIZE
@@ -42,6 +43,9 @@ void ssp_receive_byte(uint8_t byte)
 
 SSP_Package* get_package_if_ready()
 {
+	if (!ssp_has_new_data())
+		return NULL;
+
 	if (ssp_receiver_buffer.size < sizeof(SSP_Header))
 		return NULL;
 
@@ -50,7 +54,7 @@ SSP_Package* get_package_if_ready()
 
 	uint16_t total_package_size = sizeof(SSP_Header) + header->size;
 
-	if (ssp_receiver_buffer.size < total_package_size)
+	if (ssp_receiver_buffer.size != total_package_size)
 		return NULL;
 
 	uint8_t* argument_inplace = ssp_receiver_buffer.buffer + sizeof(SSP_Header);
@@ -137,11 +141,11 @@ void ssp_reset_receiver(void)
 	//ticks_last_bus_io = ssp_get_time_ms();
 }
 
-uint8_t ssp_was_received_anything()
+uint8_t ssp_has_new_data()
 {
-	if (ssp_receiver_buffer.was_anything_received != 0)
+	if (ssp_receiver_buffer.has_new_data != 0)
 	{
-		ssp_receiver_buffer.was_anything_received = 0;
+		ssp_receiver_buffer.has_new_data = 0;
 		return 1;
 	}
 	return 0;

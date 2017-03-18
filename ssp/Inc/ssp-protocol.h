@@ -68,7 +68,7 @@ typedef struct {
 typedef struct {
 	uint8_t buffer[SSP_MAX_INPUT_BUFFER_SIZE];
 	uint16_t size;
-	uint8_t was_anything_received;
+	uint8_t has_new_data;
 } SSP_Receiver_Buffer;
 
 typedef struct {

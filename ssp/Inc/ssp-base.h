@@ -8,6 +8,8 @@
 #ifndef SMART_SENSOR_LASERTAG_SSP_SSP_INC_SSP_BASE_H_
 #define SMART_SENSOR_LASERTAG_SSP_SSP_INC_SSP_BASE_H_
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 	extern "C" {
 #endif
@@ -18,7 +20,7 @@
  */
 
 #define SSP_IR_BUFFER_MAX_SIZE          50
-#define SSP_UART_SPEED                  38400
+#define SSP_UART_SPEED                  9600
 
 #pragma pack(push, 1)
 

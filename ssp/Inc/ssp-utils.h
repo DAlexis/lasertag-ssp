@@ -26,7 +26,6 @@ void     send_package(SSP_Package* package);
 uint8_t  ssp_is_receiving_timeouted(void);
 uint32_t ssp_get_time_from_last_package();
 void     ssp_reset_receiver(void);
-uint8_t  ssp_was_received_anything();
 
 uint16_t ssp_random(void);
 

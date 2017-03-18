@@ -8,6 +8,7 @@
 #ifndef SMART_SENSOR_INC_SSP_DRIVER_H_
 #define SMART_SENSOR_INC_SSP_DRIVER_H_
 
+#include "ssp-base.h"
 #include <stdint.h>
 
 #ifdef __cplusplus
