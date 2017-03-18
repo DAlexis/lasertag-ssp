@@ -57,10 +57,6 @@ void ssp_master_task_tick(void)
 		}
 	}
 
-	if (!ssp_is_address_discovering_now())
-		busy = 0;
-
-
 	if (ssp_is_address_discovering_now())
 	{
 		// We are in address discovery mode
@@ -142,6 +138,7 @@ uint8_t ssp_is_address_discovering_now()
 void ssp_stop_address_discovering()
 {
 	addr_disc_last_prob = 0;
+	busy = 0;
 }
 
 uint8_t ssp_is_busy()
