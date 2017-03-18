@@ -134,12 +134,12 @@ void send_ir_data(void)
 		ssp_get_ir_data(&ir_data, &ir_data_size);
 
 		SSP_IR_Buffer buf;
-		buf.bits_count = ir_data_size;
 		memset(buf.data, 0, sizeof(buf.data));
 		memcpy(buf.data, ir_data, ssp_bits_to_bytes(ir_data_size));
+		buf.bits_count = ir_data_size;
 
 		package.header.size = sizeof(SSP_IR_Buffer);
-		package.argument = ir_data;
+		package.argument = &buf;
 		send_package(&package);
 	} else {
 		package.header.size = 0;
