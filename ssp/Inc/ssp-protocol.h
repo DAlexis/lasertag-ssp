@@ -44,7 +44,7 @@ typedef struct {
 
 #pragma pack(pop)
 
-#define RECEIVER_TIMEOUT	20
+#define RECEIVER_TIMEOUT	5
 
 #define SSP_BROADCAST_ADDRESS           ((SSP_Address) 0xFFFF)
 #define SSP_MASTER_ADDRESS              ((SSP_Address) 0xFFF0)

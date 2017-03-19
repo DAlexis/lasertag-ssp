@@ -8,7 +8,7 @@
 #include <string.h>
 //#include "stm32f0xx_hal.h"
 
-#define MAX_ANIMATION_TASKS_COUNT	10
+#define MAX_ANIMATION_TASKS_COUNT	15
 
 // Public variables
 SSP_Sensor_Animation_State sensor_state;
