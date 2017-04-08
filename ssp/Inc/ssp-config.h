@@ -30,7 +30,7 @@
  * at least >= RECEIVER_TIMEOUT + 2
  */
 #ifndef TRAMSMITTER_TIMEOUT
-	#define TRAMSMITTER_TIMEOUT          RECEIVER_TIMEOUT + 3
+	#define TRAMSMITTER_TIMEOUT          RECEIVER_TIMEOUT + 1
 #endif
 
 #ifndef SSP_IR_BUFFER_MAX_SIZE
@@ -48,7 +48,7 @@
 // Sensor configuration
 
 #ifndef MAX_ANIMATION_TASKS_COUNT
-	#define MAX_ANIMATION_TASKS_COUNT	 15
+	#define MAX_ANIMATION_TASKS_COUNT	 25
 #endif
 
 ///////////////////////////////////////////
@@ -63,7 +63,7 @@
 #endif
 
 #ifndef ADDRESS_DISCOVERING_TIMEOUT
-	#define ADDRESS_DISCOVERING_TIMEOUT      30
+	#define ADDRESS_DISCOVERING_TIMEOUT      TRAMSMITTER_TIMEOUT
 #endif
 
 #endif /* INC_SSP_CONFIG_H_ */

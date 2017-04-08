@@ -41,6 +41,9 @@ void ssp_push_ir_request(SSP_Address target_device);
 SSP_IR_Message* ssp_get_next_ir_buffer();
 
 /* Send animation task to sensor by address. Broadcast acceptable */
+void ssp_push_animation_reset(SSP_Address target);
+
+/* Send animation task to sensor by address. Broadcast acceptable */
 void ssp_push_animation_task(SSP_Address target, SSP_Sensor_Animation_Task* task);
 
 /* Begin address discovering procedure */

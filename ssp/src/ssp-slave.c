@@ -33,6 +33,7 @@ static void send_ir_data(void);
 static void send_address_probably(uint16_t prob);
 static void address_sending_enable(uint8_t enable);
 static void animate(void);
+static void reset_animation(void);
 static void load_animation_task(SSP_Sensor_Animation_Task* task);
 static uint16_t ssp_random(void);
 
@@ -103,6 +104,7 @@ void parse_package(SSP_Package* package)
 	case SSP_M2S_ADD_ANIMATION_TASK: load_animation_task((SSP_Sensor_Animation_Task*) package->argument ); return;
 	case SSP_M2S_ENABLE_SEND_ADDR_PROB: address_sending_enable(*package->argument); return;
 	case SSP_M2S_SEND_ADDRESS_PROB: send_address_probably( *((uint16_t*) package->argument) ); return;
+	case SSP_M2S_RESET_ANIMATION: reset_animation(); return;
 	}
 }
 
@@ -173,7 +175,7 @@ void animate()
 	SSP_Sensor_Animation_Task* next = &(animation_tasks[next_animation_to_play]);
 	SSP_Sensor_Animation_Task* current = &(animation_tasks[prev_animation_ring_index(next_animation_to_play)]);
 
-	uint32_t elapsed = ssp_get_time_ms() - last_animation_task_time;
+	uint32_t elapsed = ssp_get_ticks() - last_animation_task_time;
 	uint32_t period = next->ms_from_last_state;
 
 	if (elapsed > period)
@@ -182,10 +184,11 @@ void animate()
 	sensor_state.red   = current->state.red   * (period - elapsed) / period + next->state.red   * elapsed / period;
 	sensor_state.green = current->state.green * (period - elapsed) / period + next->state.green * elapsed / period;
 	sensor_state.blue  = current->state.blue  * (period - elapsed) / period + next->state.blue  * elapsed / period;
+	sensor_state.vibro = current->state.vibro * (period - elapsed) / period + next->state.vibro * elapsed / period;
 
 	//uint8_t current_animation_state = prev_animation_ring_index(next_animation_to_play);
 
-	if (animation_tasks[next_animation_to_play].ms_from_last_state <= ssp_get_time_ms() - last_animation_task_time)
+	if (animation_tasks[next_animation_to_play].ms_from_last_state <= ssp_get_ticks() - last_animation_task_time)
 	{
 		// We need to change animation
 		preloaded_animations_count--;
@@ -193,8 +196,20 @@ void animate()
 		sensor_state = animation_tasks[next_animation_to_play].state;
 
 		next_animation_to_play = next_animation_ring_index(next_animation_to_play);
-		last_animation_task_time = ssp_get_time_ms();
+		last_animation_task_time = ssp_get_ticks();
 	}
+}
+
+void reset_animation(void)
+{
+	preloaded_animations_count = 0;
+	next_animation_to_load = 0;
+	next_animation_to_play = 0;
+
+	sensor_state.red   = 0;
+	sensor_state.green = 0;
+	sensor_state.blue  = 0;
+	sensor_state.vibro = 0;
 }
 
 void load_animation_task(SSP_Sensor_Animation_Task* task)

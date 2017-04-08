@@ -39,7 +39,7 @@ void ssp_receive_byte(uint8_t byte)
 	//HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);
 	ssp_reset_receiver_if_timeout();
 	ssp_receiver_buffer.has_new_data = 1;
-	ticks_last_bus_io = ssp_get_time_ms();
+	ticks_last_bus_io = ssp_get_ticks();
 	if (ssp_receiver_buffer.size == SSP_MAX_INPUT_BUFFER_SIZE - 1)
 		return; // We do not support messages that are longer than SSP_MAX_INPUT_BUFFER_SIZE
 	ssp_receiver_buffer.buffer[ssp_receiver_buffer.size++] = byte;
@@ -109,7 +109,7 @@ void send_package(SSP_Package* package)
 	ssp_send_data((uint8_t*) &(package->header), sizeof(SSP_Header));
 	ssp_send_data(package->argument, package->header.size);
 
-	ticks_last_bus_io = ssp_get_time_ms();
+	ticks_last_bus_io = ssp_get_ticks();
 }
 
 uint8_t package_crc8(SSP_Header* header, uint8_t *argument)
@@ -144,7 +144,7 @@ uint8_t ssp_is_transmitter_timeouted(void)
 
 uint32_t ssp_get_time_from_last_package()
 {
-	return ssp_get_time_ms() - ticks_last_bus_io;
+	return ssp_get_ticks() - ticks_last_bus_io;
 }
 
 void ssp_reset_receiver_if_timeout()
@@ -153,7 +153,7 @@ void ssp_reset_receiver_if_timeout()
 	{
 		ssp_reset_receiver();
 	}
-	ticks_last_bus_io = ssp_get_time_ms();
+	ticks_last_bus_io = ssp_get_ticks();
 }
 
 void ssp_reset_receiver(void)
@@ -212,7 +212,7 @@ uint8_t ssp_crc8_seed(uint8_t seed, uint8_t *data, uint16_t len)
 void ssp_send_data_clear_timeout(uint8_t* data, uint16_t size)
 {
 	ssp_send_data(data, size);
-	ticks_last_bus_io = ssp_get_time_ms();
+	ticks_last_bus_io = ssp_get_ticks();
 }
 
 

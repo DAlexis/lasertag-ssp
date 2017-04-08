@@ -23,22 +23,22 @@
 
 #pragma pack(push, 1)
 
-typedef struct {
-	uint8_t red;
-	uint8_t green;
-	uint8_t blue;
-	uint8_t	vibro;
-} SSP_Sensor_Animation_State;
+	typedef struct {
+		uint8_t red;
+		uint8_t green;
+		uint8_t blue;
+		uint8_t	vibro;
+	} SSP_Sensor_Animation_State;
 
-typedef struct {
-	SSP_Sensor_Animation_State state;
-	uint32_t ms_from_last_state;
-} SSP_Sensor_Animation_Task;
+	typedef struct {
+		SSP_Sensor_Animation_State state;
+		uint32_t ms_from_last_state;
+	} SSP_Sensor_Animation_Task;
 
-typedef struct {
-	uint8_t data[SSP_IR_BUFFER_MAX_SIZE];
-	uint16_t bits_count;
-} SSP_IR_Buffer;
+	typedef struct {
+		uint8_t data[SSP_IR_BUFFER_MAX_SIZE];
+		uint16_t bits_count;
+	} SSP_IR_Buffer;
 
 #pragma pack(pop)
 

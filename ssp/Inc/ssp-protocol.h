@@ -63,6 +63,7 @@ typedef struct {
 // Master to slave communication
 #define SSP_M2S_GET_IR_BUFFER           ((SSP_Command) 'g')
 #define SSP_M2S_ADD_ANIMATION_TASK      ((SSP_Command) 't')
+#define SSP_M2S_RESET_ANIMATION         ((SSP_Command) 'r')
 #define SSP_M2S_BREAK_ANIMATION         ((SSP_Command) 'b')
 #define SSP_M2S_SEND_IR_BUFFER          ((SSP_Command) 's')
 #define SSP_M2S_NOPE                    ((SSP_Command) '0')

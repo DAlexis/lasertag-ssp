@@ -102,10 +102,19 @@ SSP_IR_Message* ssp_get_next_ir_buffer()
 		return NULL;
 }
 
+void ssp_push_animation_reset(SSP_Address target)
+{
+	busy = 1;
+	SSP_Package package;
+	package_init(&package);
+	package.header.command = SSP_M2S_RESET_ANIMATION;
+	package.header.target = target;
+	send_package(&package);
+}
+
 void ssp_push_animation_task(SSP_Address target, SSP_Sensor_Animation_Task* task)
 {
 	busy = 1;
-
 	SSP_Package package;
 	package_init(&package);
 	package.header.command = SSP_M2S_ADD_ANIMATION_TASK;

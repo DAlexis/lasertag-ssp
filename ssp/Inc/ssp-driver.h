@@ -25,8 +25,10 @@
  * should initialize hardware, i. e. half duplex UART*/
 void ssp_drivers_init(void);
 
-/** Should return valid time in ms */
-uint32_t ssp_get_time_ms();
+/** Should return valid time in ticks.
+ * Tick time must be the same on master and slave device.
+ * Currently optimal is tick time = 1 ms */
+uint32_t ssp_get_ticks();
 
 /** Should send data over communication channel (i.e. UART)*/
 void ssp_send_data(uint8_t* data, uint16_t size);
