@@ -18,11 +18,14 @@
  * This functions must be implemented externally:
  */
 
-/* Should returns true when IR data received and ready to handle it */
+/** Should returns true when IR data received and ready to handle it */
 uint8_t ssp_is_ir_data_ready(void);
 
-/* Should set pointer to IR data and set its size */
+/** Should set pointer to IR data and set its size */
 void ssp_get_ir_data(uint8_t** data, uint16_t* size);
+
+/** Returns self address of device */
+SSP_Address ssp_self_address();
 
 #ifdef __cplusplus
 	} // end of extern "C"

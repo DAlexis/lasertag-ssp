@@ -8,14 +8,10 @@
 #include "ssp-protocol.h"
 #include "ssp-master-driver.h"
 #include "ssp-master.h"
-#include <ssp-utils.h>
+#include "ssp-utils.h"
 #include <stddef.h>
 #include <string.h>
 //#include <stdio.h>
-
-#define ADDRESS_DISCOVERING_PROB_STEP     UINT16_MAX / 32
-#define ADDRESS_DISCOVERING_START_PROB    ADDRESS_DISCOVERING_PROB_STEP
-#define ADDRESS_DISCOVERING_TIMEOUT       30
 
 // Public variables
 SSP_Registered_Addrs_List ssp_registered_addrs;
@@ -25,7 +21,6 @@ static SSP_IR_Message ir_queue[SSP_IR_QUEUE_SIZE];
 static uint16_t ir_queue_begin = 0;
 static uint16_t ir_queue_end = 0;
 static uint8_t busy = 0;
-
 
 static uint16_t addr_disc_last_prob = 0;
 
@@ -76,10 +71,9 @@ void ssp_master_task_tick(void)
 		}
 	}
 
-	if (ssp_is_receiving_timeouted())
+	if (ssp_is_transmitter_timeouted())
 	{
 		busy = 0;
-		ssp_reset_receiver();
 	}
 
 }

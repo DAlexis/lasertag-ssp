@@ -19,51 +19,31 @@
 
 #include "ssp-base.h"
 #include "ssp-types.h"
+#include "ssp-config.h"
 
 #ifdef __cplusplus
 	extern "C" {
 #endif
 
-#define SSP_MAX_INPUT_BUFFER_SIZE       70
-#define SSP_MAX_ARGUMENT_SIZE           SSP_MAX_INPUT_BUFFER_SIZE
+#define SSP_MAX_ARGUMENT_SIZE           (SSP_MAX_INPUT_BUFFER_SIZE - sizeof(SSP_Package))
 
+// network structures are packed
 #pragma pack(push, 1)
 
-// Package from master to sensor
-typedef struct {
-	SSP_Checksum crc8;
-	SSP_Argument_Size size;
-	SSP_Address target;
-	SSP_Address sender;
-	SSP_Command command;
-} SSP_Header;
+	// Package from master to sensor
+	typedef struct {
+		SSP_Checksum crc8;
+		SSP_Argument_Size size;
+		SSP_Address target;
+		SSP_Address sender;
+		SSP_Command command;
+	} SSP_Header;
 
-typedef struct {
-	uint16_t probability; // real prob is probability/UINT16_MAX
-} SSP_Address_Request;
+	typedef struct {
+		uint16_t probability; // real prob is probability/UINT16_MAX
+	} SSP_Address_Request;
 
 #pragma pack(pop)
-
-#define RECEIVER_TIMEOUT	5
-
-#define SSP_BROADCAST_ADDRESS           ((SSP_Address) 0xFFFF)
-#define SSP_MASTER_ADDRESS              ((SSP_Address) 0xFFF0)
-
-#define SSP_M2S_GET_IR_BUFFER           ((SSP_Command) 'g')
-#define SSP_M2S_ADD_ANIMATION_TASK      ((SSP_Command) 't')
-#define SSP_M2S_BREAK_ANIMATION         ((SSP_Command) 'b')
-#define SSP_M2S_SEND_IR_BUFFER          ((SSP_Command) 's')
-#define SSP_M2S_NOPE                    ((SSP_Command) '0')
-
-// Address discovering features
-#define SSP_M2S_SEND_ADDRESS_PROB       ((SSP_Command) 'p')
-#define SSP_M2S_ENABLE_SEND_ADDR_PROB   ((SSP_Command) 'x') // Argument is uint8_t true/false
-
-#define SSP_S2M_NOPE               ((SSP_Command) 'n') // No argument
-#define SSP_S2M_ADDRESS_DISCOVERY  ((SSP_Command) 'a') // No argument
-#define SSP_S2M_IR_DATA            ((SSP_Command) 'i')
-#define SSP_S2M_DEBUG              ((SSP_Command) 'd')
-
 
 typedef struct {
 	uint8_t buffer[SSP_MAX_INPUT_BUFFER_SIZE];
@@ -76,7 +56,26 @@ typedef struct {
 	uint8_t* argument;
 } SSP_Package;
 
-extern SSP_Receiver_Buffer ssp_receiver_buffer;
+// Default addresses
+#define SSP_BROADCAST_ADDRESS           ((SSP_Address) 0xFFFF)
+#define SSP_MASTER_ADDRESS              ((SSP_Address) 0xFFF0)
+
+// Master to slave communication
+#define SSP_M2S_GET_IR_BUFFER           ((SSP_Command) 'g')
+#define SSP_M2S_ADD_ANIMATION_TASK      ((SSP_Command) 't')
+#define SSP_M2S_BREAK_ANIMATION         ((SSP_Command) 'b')
+#define SSP_M2S_SEND_IR_BUFFER          ((SSP_Command) 's')
+#define SSP_M2S_NOPE                    ((SSP_Command) '0')
+
+// Address discovering features
+#define SSP_M2S_SEND_ADDRESS_PROB       ((SSP_Command) 'p')
+#define SSP_M2S_ENABLE_SEND_ADDR_PROB   ((SSP_Command) 'x') // Argument is uint8_t true/false
+
+// Slave to master communication
+#define SSP_S2M_NOPE               ((SSP_Command) 'n') // No argument
+#define SSP_S2M_ADDRESS_DISCOVERY  ((SSP_Command) 'a') // No argument
+#define SSP_S2M_IR_DATA            ((SSP_Command) 'i')
+#define SSP_S2M_DEBUG              ((SSP_Command) 'd')
 
 #ifdef __cplusplus
 	} // end of extern "C"

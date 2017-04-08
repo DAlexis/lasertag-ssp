@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 
+#include "ssp-config.h"
+
 #ifdef __cplusplus
 	extern "C" {
 #endif
@@ -18,9 +20,6 @@
  * This header contains SSP definitions used for both Master and Slave device
  * and needed by user
  */
-
-#define SSP_IR_BUFFER_MAX_SIZE          50
-#define SSP_UART_SPEED                  115200
 
 #pragma pack(push, 1)
 

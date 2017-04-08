@@ -7,12 +7,14 @@
 
 #include "ssp-config.h"
 #include "ssp-driver.h"
+#include "ssp-utils.h"
 
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
-#include <ssp-utils.h>
 #include <stdlib.h>
+
+//#include "gpio.h"
 
 #define CRC8_SEED           0xFF
 
@@ -30,10 +32,12 @@ uint8_t ssp_crc8_seed(uint8_t seed, uint8_t *pcBlock, uint16_t len);
 uint8_t package_crc8(SSP_Header* header, uint8_t *argument);
 
 uint8_t ssp_has_new_data();
-
+void ssp_reset_receiver_if_timeout();
 
 void ssp_receive_byte(uint8_t byte)
 {
+	//HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);
+	ssp_reset_receiver_if_timeout();
 	ssp_receiver_buffer.has_new_data = 1;
 	ticks_last_bus_io = ssp_get_time_ms();
 	if (ssp_receiver_buffer.size == SSP_MAX_INPUT_BUFFER_SIZE - 1)
@@ -130,9 +134,26 @@ uint8_t ssp_is_receiving_timeouted(void)
 		return 0;
 }
 
+uint8_t ssp_is_transmitter_timeouted(void)
+{
+	if (ssp_get_time_from_last_package() > TRAMSMITTER_TIMEOUT)
+		return 1;
+	else
+		return 0;
+}
+
 uint32_t ssp_get_time_from_last_package()
 {
 	return ssp_get_time_ms() - ticks_last_bus_io;
+}
+
+void ssp_reset_receiver_if_timeout()
+{
+	if (ssp_is_receiving_timeouted())
+	{
+		ssp_reset_receiver();
+	}
+	ticks_last_bus_io = ssp_get_time_ms();
 }
 
 void ssp_reset_receiver(void)
@@ -201,16 +222,4 @@ uint16_t ssp_bits_to_bytes(uint16_t bits)
 	if (bits % 8 != 0)
 		bytes++;
 	return bytes;
-}
-
-/** Using standard random */
-uint16_t ssp_random(void)
-{
-	static uint8_t first_run = 1;
-	if (first_run)
-	{
-		srand((SSP_SELF_ADDRESS << 15) | SSP_SELF_ADDRESS);
-		first_run = 0;
-	}
-	return rand() & 0xFFFF;
 }

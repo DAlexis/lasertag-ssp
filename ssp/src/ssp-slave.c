@@ -6,9 +6,8 @@
 
 #include <stddef.h>
 #include <string.h>
+#include <stdlib.h>
 //#include "stm32f0xx_hal.h"
-
-#define MAX_ANIMATION_TASKS_COUNT	15
 
 // Public variables
 SSP_Sensor_Animation_State sensor_state;
@@ -35,6 +34,7 @@ static void send_address_probably(uint16_t prob);
 static void address_sending_enable(uint8_t enable);
 static void animate(void);
 static void load_animation_task(SSP_Sensor_Animation_Task* task);
+static uint16_t ssp_random(void);
 
 // Public functions
 
@@ -49,11 +49,6 @@ void ssp_sensor_task_tick(void)
 	{
 		if (is_package_for_me(package))
 			parse_package(package);
-	}
-
-	if (ssp_is_receiving_timeouted())
-	{
-		ssp_reset_receiver();
 	}
 
 	/* If package is not for smart sensor, we can do nothing
@@ -94,7 +89,7 @@ void ssp_send_debug_msg(char *ptr, int len)
 
 uint8_t is_package_for_me(SSP_Package* package)
 {
-	if (package->header.target == SSP_BROADCAST_ADDRESS || package->header.target  == SSP_SELF_ADDRESS)
+	if (package->header.target == SSP_BROADCAST_ADDRESS || package->header.target  == ssp_self_address())
 		return 1; // Package not for me
 	else
 		return 0;
@@ -115,13 +110,14 @@ void package_init(SSP_Package* package)
 {
 	package->header.size = 0;
 	package->header.target = SSP_MASTER_ADDRESS;
-	package->header.sender = SSP_SELF_ADDRESS;
+	package->header.sender = ssp_self_address();
 	package->header.command = SSP_S2M_NOPE;
 	package->argument = NULL;
 }
 
 void send_ir_data(void)
 {
+	//HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);
 	SSP_Package package;
 	package_init(&package);
 	package.header.command = SSP_S2M_IR_DATA;
@@ -139,7 +135,7 @@ void send_ir_data(void)
 		buf.bits_count = ir_data_size;
 
 		package.header.size = sizeof(SSP_IR_Buffer);
-		package.argument = &buf;
+		package.argument = (void*) &buf;
 		send_package(&package);
 	} else {
 		package.header.size = 0;
@@ -156,7 +152,6 @@ void send_address_probably(uint16_t prob)
 	if (ssp_random() > prob)
 		return;
 
-	//HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);
 	SSP_Package package;
 	package_init(&package);
 	package.header.command = SSP_S2M_ADDRESS_DISCOVERY;
@@ -222,4 +217,16 @@ uint8_t next_animation_ring_index(uint8_t index)
 uint8_t prev_animation_ring_index(uint8_t index)
 {
 	return index != 0 ? index-1 : MAX_ANIMATION_TASKS_COUNT-1;
+}
+
+/** Using standard random */
+uint16_t ssp_random(void)
+{
+	static uint8_t first_run = 1;
+	if (first_run)
+	{
+		srand((ssp_self_address() << 15) | ssp_self_address());
+		first_run = 0;
+	}
+	return rand() & 0xFFFF;
 }
