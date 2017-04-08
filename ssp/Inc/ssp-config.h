@@ -23,7 +23,14 @@
 #endif
 
 #ifndef RECEIVER_TIMEOUT
-	#define RECEIVER_TIMEOUT	         5
+	#define RECEIVER_TIMEOUT	         2
+#endif
+
+/** Transmitter timeout should be
+ * at least >= RECEIVER_TIMEOUT + 2
+ */
+#ifndef TRAMSMITTER_TIMEOUT
+	#define TRAMSMITTER_TIMEOUT          RECEIVER_TIMEOUT + 3
 #endif
 
 #ifndef SSP_IR_BUFFER_MAX_SIZE
@@ -34,14 +41,7 @@
  * You may use it if your bus is UART
  */
 #ifndef SSP_UART_SPEED
-	#define SSP_UART_SPEED               9600
-#endif
-
-/** Transmitter timeout should be
- * at least >= RECEIVER_TIMEOUT + 2
- */
-#ifndef TRAMSMITTER_TIMEOUT
-	#define TRAMSMITTER_TIMEOUT          10
+	#define SSP_UART_SPEED               115200
 #endif
 
 ///////////////////////////////////////////
